@@ -1,0 +1,162 @@
+{
+  "teams": [
+    {
+      "id": 1,
+      "name": "Команда 1",
+      "color": "#e91e8c",
+      "members": [
+        "Саша Темников",
+        "Екатерина Девятьярова",
+        "Даниил Бурлаков",
+        "Полина Пальянова"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Команда 2",
+      "color": "#4caf50",
+      "members": [
+        "Сермяжко Алексей",
+        "Владимир Медведев",
+        "Алиса Агеева",
+        "Станислав Козин"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Команда 3",
+      "color": "#9c27b0",
+      "members": [
+        "Карина Абдулаева",
+        "Полина Цветкова",
+        "Арина Чакова",
+        "Анна Ефимова"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Команда 4",
+      "color": "#ff9800",
+      "members": [
+        "Сергей Пушкин",
+        "Арина Моругова",
+        "Эльвира Галиева",
+        "Вероника Антончик"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Команда 5",
+      "color": "#2196f3",
+      "members": [
+        "Дима Казаченко",
+        "Мария Завьялова",
+        "Алена Сумина",
+        "Елизавета Костина"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Команда 6",
+      "color": "#00bcd4",
+      "members": [
+        "Кулакова Ольга",
+        "Иван Фомин",
+        "Диана Кудашова",
+        "Артем Чистяков",
+        "Аня Проскурякова"
+      ]
+    }
+  ],
+  "scores": {
+    "aleksej": {
+      "1": {
+        "business": 5,
+        "innovation": 5,
+        "readiness": 5,
+        "presentation": 5,
+        "comment": ""
+      },
+      "2": {
+        "business": 5,
+        "innovation": 5,
+        "readiness": 5,
+        "presentation": 5,
+        "comment": ""
+      },
+      "3": {
+        "business": 5,
+        "innovation": 5,
+        "readiness": 5,
+        "presentation": 5,
+        "comment": ""
+      },
+      "4": {
+        "business": 5,
+        "innovation": 5,
+        "readiness": 5,
+        "presentation": 5,
+        "comment": ""
+      },
+      "5": {
+        "business": 5,
+        "innovation": 5,
+        "readiness": 5,
+        "presentation": 5,
+        "comment": ""
+      },
+      "6": {
+        "business": 5,
+        "innovation": 5,
+        "readiness": 5,
+        "presentation": 5,
+        "comment": ""
+      }
+    },
+    "egor": {
+      "1": {
+        "business": 5,
+        "innovation": 5,
+        "readiness": 5,
+        "presentation": 5,
+        "comment": ""
+      },
+      "2": {
+        "business": 5,
+        "innovation": 5,
+        "readiness": 5,
+        "presentation": 5,
+        "comment": ""
+      },
+      "3": {
+        "business": 5,
+        "innovation": 4,
+        "readiness": 2,
+        "presentation": 3,
+        "comment": ""
+      },
+      "4": {
+        "business": 3,
+        "innovation": 3,
+        "readiness": 2,
+        "presentation": 1,
+        "comment": ""
+      },
+      "5": {
+        "business": 4,
+        "innovation": 3,
+        "readiness": 2,
+        "presentation": 2,
+        "comment": ""
+      },
+      "6": {
+        "business": 4,
+        "innovation": 5,
+        "readiness": 3,
+        "presentation": 3,
+        "comment": ""
+      }
+    }
+  },
+  "revealed": true
+}

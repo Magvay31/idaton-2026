@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IDATON 2026</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #0a0a1a;
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .bg-glow {
+    position: fixed;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    filter: blur(150px);
+    opacity: 0.15;
+    pointer-events: none;
+  }
+  .bg-glow.g1 { top: -200px; left: -100px; background: #e91e8c; }
+  .bg-glow.g2 { bottom: -200px; right: -100px; background: #2196f3; }
+
+  h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #e91e8c, #9c27b0, #2196f3);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+  }
+  .subtitle {
+    color: #888;
+    font-size: 1.1rem;
+    margin-bottom: 3rem;
+    text-align: center;
+  }
+  .cards {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+  }
+  .card {
+    background: linear-gradient(145deg, #1a1a2e, #16162a);
+    border: 1px solid #2a2a4a;
+    border-radius: 20px;
+    padding: 2.5rem 2rem;
+    width: 260px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+  }
+  .card:hover {
+    transform: translateY(-8px);
+    border-color: var(--accent);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 30px color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+  .card-icon {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+  .card-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .card-desc {
+    font-size: 0.9rem;
+    color: #888;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+  <div class="bg-glow g1"></div>
+  <div class="bg-glow g2"></div>
+
+  <h1>IDATON 2026</h1>
+  <p class="subtitle">Система оценки и результаты</p>
+
+  <div class="cards">
+    <a class="card" href="/judge.html?judge=aleksej" style="--accent: #e91e8c;">
+      <span class="card-icon">👨‍⚖️</span>
+      <div class="card-title">Алексей</div>
+      <div class="card-desc">Панель судьи<br>Выставить оценки</div>
+    </a>
+    <a class="card" href="/judge.html?judge=egor" style="--accent: #9c27b0;">
+      <span class="card-icon">👨‍⚖️</span>
+      <div class="card-title">Егор</div>
+      <div class="card-desc">Панель судьи<br>Выставить оценки</div>
+    </a>
+    <a class="card" href="/dashboard.html" style="--accent: #2196f3;">
+      <span class="card-icon">🏆</span>
+      <div class="card-title">Дашборд</div>
+      <div class="card-desc">Лидерборд и<br>объявление победителя</div>
+    </a>
+  </div>
+</body>
+</html>

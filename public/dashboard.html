@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IDATON 2026 — Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a1a;
+    --card: #1a1a2e;
+    --card-border: #2a2a4a;
+    --gold: #ffd700;
+    --silver: #c0c0c0;
+    --bronze: #cd7f32;
+    --row-h: 58px;
+    --row-gap: 8px;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: #e0e0e0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .bg-glow {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(150px);
+    opacity: 0.12;
+    pointer-events: none;
+    z-index: 0;
+    transition: opacity 1s;
+  }
+  .bg-glow.g1 { width: 500px; height: 500px; top: -150px; left: -100px; background: #e91e8c; }
+  .bg-glow.g2 { width: 400px; height: 400px; bottom: -100px; right: -50px; background: #2196f3; }
+  .bg-glow.g3 { width: 300px; height: 300px; top: 40%; left: 50%; background: #9c27b0; }
+  body.racing .bg-glow { opacity: 0.22; }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  .header { text-align: center; margin-bottom: 2.5rem; }
+  .header h1 {
+    font-size: 3rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, #e91e8c, #9c27b0, #2196f3);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.3rem;
+  }
+  .header .sub {
+    color: #555;
+    font-size: 1rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    transition: color 0.5s;
+  }
+  body.racing .header .sub { color: #e91e8c; }
+  .judges-status {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 1rem;
+  }
+  .judge-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: #666;
+  }
+  .judge-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #333;
+    transition: background 0.3s;
+  }
+  .judge-dot.done { background: #4caf50; box-shadow: 0 0 8px rgba(76,175,80,0.5); }
+  .judge-dot.partial { background: #ff9800; box-shadow: 0 0 8px rgba(255,152,0,0.5); }
+
+  .main-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+
+  .section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #555;
+    margin-bottom: 1rem;
+  }
+
+  /* Teams column */
+  .teams-list { display: flex; flex-direction: column; gap: 0.8rem; }
+  .team-row {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 1rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.4s ease;
+  }
+  .team-row .badge {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1rem; color: #fff; flex-shrink: 0;
+  }
+  .team-row .info { flex: 1; }
+  .team-row .tname { font-weight: 700; font-size: 1rem; }
+  .team-row .tmembers { font-size: 0.75rem; color: #555; margin-top: 2px; }
+  .member-avatar {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 6px;
+    font-size: 0.55rem; font-weight: 700; color: #fff;
+    margin-right: 2px; vertical-align: middle;
+  }
+
+  /* Leaderboard column */
+  .race-status {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #e91e8c;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 0.8rem;
+    height: 18px;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  body.racing .race-status {
+    opacity: 1;
+    animation: racePulse 1.5s ease-in-out infinite;
+  }
+  @keyframes racePulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  .leaderboard {
+    position: relative;
+    /* height set dynamically */
+  }
+  .lb-row {
+    position: absolute;
+    left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.8rem 1rem;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    transition: transform 0.7s cubic-bezier(0.34, 1.4, 0.64, 1),
+                box-shadow 0.4s ease, border-color 0.4s ease;
+    height: var(--row-h);
+    overflow: hidden;
+  }
+  body.racing .lb-row {
+    border-color: rgba(233, 30, 140, 0.15);
+  }
+  .lb-rank {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 0.95rem;
+    background: #2a2a4a; color: #666; flex-shrink: 0;
+    transition: all 0.4s ease;
+  }
+  .lb-rank.r1 { background: linear-gradient(135deg, #ffd700, #ffaa00); color: #1a1a2e; }
+  .lb-rank.r2 { background: linear-gradient(135deg, #c0c0c0, #999); color: #1a1a2e; }
+  .lb-rank.r3 { background: linear-gradient(135deg, #cd7f32, #a0522d); color: #fff; }
+  .lb-team-name { font-weight: 700; font-size: 0.95rem; min-width: 100px; }
+  .lb-bar-wrap {
+    flex: 1; height: 28px;
+    background: #12121f; border-radius: 8px;
+    overflow: hidden; position: relative;
+  }
+  .lb-bar {
+    height: 100%; border-radius: 8px;
+    transition: width 0.9s cubic-bezier(0.34, 1, 0.64, 1);
+    width: 0%; position: relative;
+  }
+  .lb-bar::after {
+    content: '';
+    position: absolute; top: 0; right: 0;
+    width: 3px; height: 100%;
+    background: rgba(255,255,255,0.4); border-radius: 3px;
+  }
+  .lb-bar.bar-glow {
+    box-shadow: 0 0 12px currentColor;
+  }
+  .lb-score {
+    font-weight: 800; font-size: 1.1rem;
+    min-width: 50px; text-align: right; color: #444;
+    transition: color 0.3s;
+  }
+  .lb-score.has { color: #e0e0e0; }
+
+  /* Position change indicators */
+  .lb-change {
+    font-size: 0.7rem;
+    font-weight: 800;
+    min-width: 20px;
+    text-align: center;
+    transition: all 0.3s;
+  }
+  .lb-change.up { color: #4caf50; }
+  .lb-change.down { color: #f44336; }
+  .lb-change.same { color: #444; }
+
+  /* Reveal button */
+  .reveal-section { text-align: center; margin-top: 2.5rem; }
+  .reveal-btn {
+    padding: 1rem 3rem; border: none; border-radius: 16px;
+    font-size: 1.2rem; font-weight: 800; cursor: pointer;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #e91e8c, #9c27b0, #2196f3);
+    background-size: 200% auto;
+    color: #fff; letter-spacing: 1px; text-transform: uppercase;
+    animation: shimmer 3s linear infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+  }
+  .reveal-btn:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(233, 30, 140, 0.3);
+  }
+  .reveal-btn:disabled {
+    opacity: 0.3; cursor: not-allowed;
+    transform: none; box-shadow: none; animation: none;
+  }
+
+  /* Countdown overlay */
+  .countdown-overlay {
+    position: fixed; inset: 0;
+    background: rgba(10, 10, 26, 0.97);
+    display: none; align-items: center; justify-content: center;
+    z-index: 1000; flex-direction: column;
+  }
+  .countdown-overlay.show { display: flex; }
+  .countdown-number {
+    font-size: 15rem; font-weight: 900;
+    background: linear-gradient(135deg, #e91e8c, #9c27b0, #2196f3);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    animation: countPop 0.8s ease-out; line-height: 1;
+  }
+  @keyframes countPop {
+    0% { transform: scale(3); opacity: 0; }
+    50% { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Winner banner */
+  .winner-banner {
+    position: fixed; inset: 0;
+    background: rgba(10, 10, 26, 0.95);
+    display: none; align-items: center; justify-content: center;
+    z-index: 999; flex-direction: column; gap: 1.5rem;
+  }
+  .winner-banner.show { display: flex; }
+  .winner-trophy { font-size: 6rem; animation: trophyBounce 1s ease-out; }
+  @keyframes trophyBounce {
+    0% { transform: scale(0) rotate(-20deg); }
+    50% { transform: scale(1.3) rotate(5deg); }
+    70% { transform: scale(0.9) rotate(-3deg); }
+    100% { transform: scale(1) rotate(0); }
+  }
+  .winner-title {
+    font-size: 2rem; font-weight: 900; text-transform: uppercase;
+    letter-spacing: 4px; color: var(--gold);
+    text-shadow: 0 0 30px rgba(255,215,0,0.5);
+    animation: fadeUp 0.8s ease-out 0.3s both;
+  }
+  .winner-team-name {
+    font-size: 4rem; font-weight: 900;
+    background: linear-gradient(135deg, #ffd700, #ffaa00, #ffd700);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    animation: fadeUp 0.8s ease-out 0.6s both;
+  }
+  .winner-score-display {
+    font-size: 2rem; color: #aaa; font-weight: 300;
+    animation: fadeUp 0.8s ease-out 0.9s both;
+  }
+  .winner-members-display {
+    font-size: 1.1rem; color: #777; text-align: center;
+    max-width: 500px; line-height: 1.8;
+    animation: fadeUp 0.8s ease-out 1.2s both;
+  }
+  @keyframes fadeUp {
+    0% { transform: translateY(30px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+  .winner-close {
+    margin-top: 2rem; padding: 0.8rem 2rem;
+    border: 1px solid #444; background: transparent;
+    color: #888; border-radius: 10px; cursor: pointer;
+    font-size: 0.9rem; transition: all 0.2s;
+    animation: fadeUp 0.8s ease-out 1.5s both;
+  }
+  .winner-close:hover { border-color: #888; color: #e0e0e0; }
+
+  /* Podium */
+  .podium-section { display: none; margin-top: 2rem; padding: 2rem; }
+  .podium-section.show { display: block; }
+  .podium {
+    display: flex; align-items: flex-end; justify-content: center;
+    gap: 0.5rem; height: 280px; margin-top: 1rem;
+  }
+  .podium-place {
+    display: flex; flex-direction: column; align-items: center;
+    width: 200px; animation: podiumRise 1s ease-out both;
+  }
+  .podium-place:nth-child(1) { animation-delay: 0.6s; }
+  .podium-place:nth-child(2) { animation-delay: 0.2s; }
+  .podium-place:nth-child(3) { animation-delay: 0.9s; }
+  @keyframes podiumRise {
+    0% { transform: translateY(100px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+  .podium-team { font-weight: 800; font-size: 1rem; margin-bottom: 0.5rem; text-align: center; }
+  .podium-pts { font-size: 0.85rem; color: #888; margin-bottom: 0.5rem; }
+  .podium-block {
+    width: 100%; border-radius: 12px 12px 0 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.5rem; font-weight: 900; color: rgba(0,0,0,0.3);
+  }
+  .podium-block.p1 { height: 180px; background: linear-gradient(180deg, #ffd700, #c8a200); box-shadow: 0 0 40px rgba(255,215,0,0.3); }
+  .podium-block.p2 { height: 130px; background: linear-gradient(180deg, #c0c0c0, #888); }
+  .podium-block.p3 { height: 90px; background: linear-gradient(180deg, #cd7f32, #8b5e20); }
+
+  .lb-row.winner-glow { border-color: var(--gold); box-shadow: 0 0 30px rgba(255,215,0,0.2); }
+
+  .score-breakdown {
+    display: none; grid-template-columns: 1fr 1fr; gap: 0.5rem;
+    margin-top: 0.5rem; padding-top: 0.8rem; border-top: 1px solid #2a2a4a;
+  }
+  .lb-row.expanded .score-breakdown { display: grid; }
+  .sb-item { font-size: 0.75rem; color: #666; }
+  .sb-item span { color: #aaa; font-weight: 600; }
+
+  @media (max-width: 900px) {
+    .main-layout { grid-template-columns: 1fr; }
+    .header h1 { font-size: 2rem; }
+    .podium-place { width: 120px; }
+  }
+</style>
+</head>
+<body>
+  <div class="bg-glow g1"></div>
+  <div class="bg-glow g2"></div>
+  <div class="bg-glow g3"></div>
+
+  <div class="container">
+    <div class="header">
+      <h1>IDATON 2026</h1>
+      <div class="sub">Live Leaderboard</div>
+      <div class="judges-status">
+        <div class="judge-status">
+          <div class="judge-dot" id="dotAleksej"></div>
+          <span>Алексей</span>
+          <span id="statusAleksej" style="color:#444">0/6</span>
+        </div>
+        <div class="judge-status">
+          <div class="judge-dot" id="dotEgor"></div>
+          <span>Егор</span>
+          <span id="statusEgor" style="color:#444">0/6</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-layout">
+      <div>
+        <div class="section-title">Команды</div>
+        <div class="teams-list" id="teamsList"></div>
+      </div>
+      <div>
+        <div class="section-title">Рейтинг</div>
+        <div class="race-status" id="raceStatus">LIVE</div>
+        <div class="leaderboard" id="leaderboard"></div>
+      </div>
+    </div>
+
+    <div class="podium-section" id="podiumSection">
+      <div class="section-title" style="text-align:center">Пьедестал почёта</div>
+      <div class="podium" id="podium"></div>
+    </div>
+
+    <div class="reveal-section" id="revealSection">
+      <button class="reveal-btn" id="revealBtn" disabled>Ожидание оценок...</button>
+    </div>
+  </div>
+
+  <div class="countdown-overlay" id="countdownOverlay">
+    <div class="countdown-number" id="countdownNum"></div>
+  </div>
+
+  <div class="winner-banner" id="winnerBanner">
+    <div class="winner-trophy">🏆</div>
+    <div class="winner-title">Победитель</div>
+    <div class="winner-team-name" id="winnerName"></div>
+    <div class="winner-score-display" id="winnerScore"></div>
+    <div class="winner-members-display" id="winnerMembers"></div>
+    <button class="winner-close" id="winnerClose">Показать полный рейтинг</button>
+  </div>
+
+<script>
+let appData = null;
+let revealed = false;
+
+// ─── Race mode state ───
+let raceActive = false;
+let raceInterval = null;
+let fakeScores = {};      // teamId -> current display score
+let prevRanks = {};        // teamId -> previous rank (for arrows)
+let rowElements = {};      // teamId -> DOM element
+let leaderboardBuilt = false;
+
+const ROW_H = 58;
+const ROW_GAP = 8;
+const MAX_SCORE = 40;
+
+async function loadData() {
+  const res = await fetch('/api/data');
+  appData = await res.json();
+  revealed = appData.revealed;
+  renderTeams();
+  updateJudgeStatus();
+  updateRevealButton();
+
+  if (revealed) {
+    stopRace();
+    showRevealedState();
+  } else {
+    buildLeaderboard();
+    const hasAnyScore = Object.keys(appData.scores.aleksej || {}).length > 0
+                     || Object.keys(appData.scores.egor || {}).length > 0;
+    if (hasAnyScore && !raceActive) {
+      startRace();
+    } else if (raceActive) {
+      // just update, don't restart
+    } else {
+      renderPositions(getDefaultOrder());
+    }
+  }
+}
+
+function getInitials(name) {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.substring(0, 2).toUpperCase();
+}
+
+function renderTeams() {
+  const el = document.getElementById('teamsList');
+  el.innerHTML = '';
+  appData.teams.forEach(team => {
+    const membersHTML = team.members.map(m =>
+      `<span class="member-avatar" style="background:${team.color}80">${getInitials(m)}</span> ${m.split(' ')[0]}`
+    ).join('&nbsp;&nbsp;');
+    el.innerHTML += `
+      <div class="team-row">
+        <div class="badge" style="background:${team.color}">${team.id}</div>
+        <div class="info">
+          <div class="tname">${team.name}</div>
+          <div class="tmembers">${membersHTML}</div>
+        </div>
+      </div>`;
+  });
+}
+
+// ─── Build leaderboard DOM (once) ───
+function buildLeaderboard() {
+  if (leaderboardBuilt) return;
+  leaderboardBuilt = true;
+
+  const el = document.getElementById('leaderboard');
+  const totalH = appData.teams.length * (ROW_H + ROW_GAP) - ROW_GAP;
+  el.style.height = totalH + 'px';
+  el.innerHTML = '';
+
+  appData.teams.forEach((team, idx) => {
+    const row = document.createElement('div');
+    row.className = 'lb-row';
+    row.dataset.teamId = team.id;
+    row.style.transform = `translateY(${idx * (ROW_H + ROW_GAP)}px)`;
+    row.innerHTML = `
+      <div class="lb-change same" data-el="change">—</div>
+      <div class="lb-rank" data-el="rank">${idx + 1}</div>
+      <div class="lb-team-name">${team.name}</div>
+      <div class="lb-bar-wrap">
+        <div class="lb-bar" data-el="bar" style="background:${team.color};width:0%"></div>
+      </div>
+      <div class="lb-score" data-el="score">—</div>
+    `;
+    el.appendChild(row);
+    rowElements[team.id] = row;
+    prevRanks[team.id] = idx;
+    fakeScores[team.id] = 10 + Math.random() * 20;
+  });
+}
+
+// ─── Render rows at given positions ───
+// `order` = array of { id, score, rank }
+function renderPositions(order) {
+  order.forEach((item, idx) => {
+    const row = rowElements[item.id];
+    if (!row) return;
+
+    // Move
+    row.style.transform = `translateY(${idx * (ROW_H + ROW_GAP)}px)`;
+
+    // Rank badge
+    const rankEl = row.querySelector('[data-el="rank"]');
+    rankEl.textContent = idx + 1;
+    rankEl.className = 'lb-rank' + (idx < 3 && item.score > 0 ? ` r${idx+1}` : '');
+
+    // Bar
+    const bar = row.querySelector('[data-el="bar"]');
+    const pct = Math.max(0, Math.min(100, (item.score / MAX_SCORE) * 100));
+    bar.style.width = pct + '%';
+
+    // Score text
+    const scoreEl = row.querySelector('[data-el="score"]');
+    if (item.showScore) {
+      scoreEl.textContent = `${Math.round(item.score)}/40`;
+      scoreEl.className = 'lb-score has';
+    } else {
+      scoreEl.textContent = item.score > 0 ? '?' : '—';
+      scoreEl.className = 'lb-score';
+    }
+
+    // Change arrows
+    const changeEl = row.querySelector('[data-el="change"]');
+    const prev = prevRanks[item.id] ?? idx;
+    const diff = prev - idx; // positive = moved up
+    if (diff > 0) {
+      changeEl.textContent = '▲' + diff;
+      changeEl.className = 'lb-change up';
+    } else if (diff < 0) {
+      changeEl.textContent = '▼' + Math.abs(diff);
+      changeEl.className = 'lb-change down';
+    } else {
+      changeEl.textContent = '—';
+      changeEl.className = 'lb-change same';
+    }
+  });
+
+  // Save current ranks for next diff
+  order.forEach((item, idx) => {
+    prevRanks[item.id] = idx;
+  });
+}
+
+function getDefaultOrder() {
+  return appData.teams.map(t => ({
+    id: t.id, score: 0, showScore: false
+  }));
+}
+
+// ─── Race mode ───
+function startRace() {
+  if (raceActive || revealed) return;
+  raceActive = true;
+  document.body.classList.add('racing');
+
+  // Init fake scores spread out
+  appData.teams.forEach(t => {
+    fakeScores[t.id] = 12 + Math.random() * 18;
+  });
+
+  shuffleTick();
+  raceInterval = setInterval(shuffleTick, 2000);
+}
+
+function shuffleTick() {
+  if (!raceActive) return;
+
+  // Randomly jitter all scores
+  appData.teams.forEach(t => {
+    const jitter = (Math.random() - 0.5) * 10;
+    fakeScores[t.id] = Math.max(4, Math.min(38, fakeScores[t.id] + jitter));
+  });
+
+  // Sort by fake scores
+  const order = appData.teams
+    .map(t => ({ id: t.id, score: fakeScores[t.id], showScore: false }))
+    .sort((a, b) => b.score - a.score);
+
+  renderPositions(order);
+}
+
+function stopRace() {
+  raceActive = false;
+  document.body.classList.remove('racing');
+  if (raceInterval) {
+    clearInterval(raceInterval);
+    raceInterval = null;
+  }
+}
+
+// ─── Score helpers ───
+function getTeamScore(teamId) {
+  let total = 0, count = 0;
+  ['aleksej', 'egor'].forEach(judge => {
+    const s = appData.scores[judge]?.[teamId];
+    if (s && s.business) {
+      total += (s.business||0) + (s.innovation||0) + (s.readiness||0) + (s.presentation||0);
+      count++;
+    }
+  });
+  return { total, count };
+}
+
+function getTeamBreakdown(teamId) {
+  const criteria = ['business','innovation','readiness','presentation'];
+  const labels = { business:'Бизнес', innovation:'Инновации', readiness:'Готовность', presentation:'Презентация' };
+  const result = {};
+  criteria.forEach(c => {
+    let sum = 0, n = 0;
+    ['aleksej','egor'].forEach(judge => {
+      const s = appData.scores[judge]?.[teamId];
+      if (s && s[c]) { sum += s[c]; n++; }
+    });
+    result[c] = { label: labels[c], sum, n };
+  });
+  return result;
+}
+
+function getSortedTeams() {
+  return appData.teams.map(t => {
+    const sc = getTeamScore(t.id);
+    return { ...t, score: sc.total, judgeCount: sc.count };
+  }).sort((a, b) => b.score - a.score);
+}
+
+function getRealOrder() {
+  return getSortedTeams().map(t => ({
+    id: t.id, score: t.score, showScore: true
+  }));
+}
+
+// ─── Judge status ───
+function updateJudgeStatus() {
+  ['aleksej','egor'].forEach(judge => {
+    const count = appData.teams.filter(t => {
+      const s = appData.scores[judge]?.[t.id];
+      return s && s.business > 0;
+    }).length;
+    const total = appData.teams.length;
+    const key = judge.charAt(0).toUpperCase() + judge.slice(1);
+    document.getElementById(`dot${key}`).className =
+      count === total ? 'judge-dot done' : count > 0 ? 'judge-dot partial' : 'judge-dot';
+    document.getElementById(`status${key}`).textContent = `${count}/${total}`;
+  });
+}
+
+function allJudgesDone() {
+  return ['aleksej','egor'].every(judge =>
+    appData.teams.every(t => {
+      const s = appData.scores[judge]?.[t.id];
+      return s && s.business > 0 && s.innovation > 0 && s.readiness > 0 && s.presentation > 0;
+    })
+  );
+}
+
+function updateRevealButton() {
+  const btn = document.getElementById('revealBtn');
+  if (revealed) {
+    document.getElementById('revealSection').style.display = 'none';
+    return;
+  }
+  if (allJudgesDone()) {
+    btn.disabled = false;
+    btn.textContent = '🏆 Объявить победителя';
+  } else {
+    btn.disabled = true;
+    const a = appData.teams.filter(t => appData.scores.aleksej?.[t.id]?.business > 0).length;
+    const e = appData.teams.filter(t => appData.scores.egor?.[t.id]?.business > 0).length;
+    btn.textContent = `Ожидание оценок... (Алексей ${a}/6, Егор ${e}/6)`;
+  }
+}
+
+// ─── Reveal sequence ───
+document.getElementById('revealBtn').addEventListener('click', async () => {
+  if (!allJudgesDone()) return;
+  await runRevealSequence();
+});
+
+async function runRevealSequence() {
+  // 1. Speed up the race first
+  stopRace();
+  document.body.classList.add('racing');
+
+  // Fast chaotic shuffling
+  let fastInterval = setInterval(() => {
+    appData.teams.forEach(t => {
+      fakeScores[t.id] = 5 + Math.random() * 33;
+    });
+    const order = appData.teams
+      .map(t => ({ id: t.id, score: fakeScores[t.id], showScore: false }))
+      .sort((a, b) => b.score - a.score);
+    renderPositions(order);
+  }, 400);
+
+  await sleep(2500);
+  clearInterval(fastInterval);
+
+  // 2. Countdown
+  const overlay = document.getElementById('countdownOverlay');
+  const numEl = document.getElementById('countdownNum');
+  overlay.classList.add('show');
+
+  for (let i = 3; i >= 1; i--) {
+    numEl.textContent = i;
+    numEl.style.animation = 'none';
+    numEl.offsetHeight;
+    numEl.style.animation = '';
+    await sleep(1000);
+  }
+
+  numEl.textContent = '🚀';
+  numEl.style.animation = 'none';
+  numEl.offsetHeight;
+  numEl.style.animation = '';
+  await sleep(800);
+  overlay.classList.remove('show');
+
+  // 3. Gradually converge to real scores
+  await fetch('/api/reveal', { method: 'POST' });
+  revealed = true;
+  document.body.classList.remove('racing');
+  document.getElementById('revealSection').style.display = 'none';
+
+  const realOrder = getRealOrder();
+
+  // Step 1: partial convergence (still noisy)
+  for (let step = 0; step < 5; step++) {
+    const blend = (step + 1) / 6;
+    const blended = realOrder.map(r => {
+      const fake = fakeScores[r.id];
+      return {
+        id: r.id,
+        score: fake + (r.score - fake) * blend,
+        showScore: false
+      };
+    }).sort((a, b) => b.score - a.score);
+    renderPositions(blended);
+    await sleep(500);
+  }
+
+  // Step 2: snap to real values
+  await sleep(300);
+  renderPositions(realOrder);
+
+  await sleep(1500);
+
+  // 4. Winner banner
+  const sorted = getSortedTeams();
+  const winner = sorted[0];
+  document.getElementById('winnerName').textContent = winner.name;
+  document.getElementById('winnerScore').textContent = `${winner.score} / 40 баллов`;
+  document.getElementById('winnerMembers').textContent = winner.members.join(' • ');
+  document.getElementById('winnerBanner').classList.add('show');
+
+  fireConfetti();
+
+  document.getElementById('winnerClose').onclick = () => {
+    document.getElementById('winnerBanner').classList.remove('show');
+    // Add glow to winner row
+    const winnerRow = rowElements[winner.id];
+    if (winnerRow) winnerRow.classList.add('winner-glow');
+    showPodium(sorted);
+    makeRowsClickable();
+  };
+}
+
+function showRevealedState() {
+  buildLeaderboard();
+  document.getElementById('revealSection').style.display = 'none';
+  const realOrder = getRealOrder();
+  renderPositions(realOrder);
+
+  const sorted = getSortedTeams();
+  const winnerRow = rowElements[sorted[0]?.id];
+  if (winnerRow) winnerRow.classList.add('winner-glow');
+
+  showPodium(sorted);
+  makeRowsClickable();
+}
+
+function makeRowsClickable() {
+  Object.values(rowElements).forEach(row => {
+    row.style.cursor = 'pointer';
+    row.onclick = () => row.classList.toggle('expanded');
+
+    const teamId = row.dataset.teamId;
+    const bd = getTeamBreakdown(teamId);
+    const bdHTML = Object.values(bd).map(b =>
+      `<div class="sb-item">${b.label}: <span>${b.sum}/${b.n * 5}</span></div>`
+    ).join('');
+
+    let bdEl = row.querySelector('.score-breakdown');
+    if (!bdEl) {
+      bdEl = document.createElement('div');
+      bdEl.className = 'score-breakdown';
+      row.style.overflow = 'visible';
+      row.style.height = 'auto';
+      row.style.minHeight = 'var(--row-h)';
+      row.appendChild(bdEl);
+    }
+    bdEl.innerHTML = bdHTML;
+  });
+}
+
+function showPodium(sorted) {
+  const section = document.getElementById('podiumSection');
+  section.classList.add('show');
+  const podium = document.getElementById('podium');
+
+  const places = [sorted[1], sorted[0], sorted[2]];
+  const pClasses = ['p2', 'p1', 'p3'];
+  const medals = ['2', '1', '3'];
+
+  podium.innerHTML = places.map((t, i) => t ? `
+    <div class="podium-place">
+      <div class="podium-team" style="color:${t.color}">${t.name}</div>
+      <div class="podium-pts">${t.score} баллов</div>
+      <div class="podium-block ${pClasses[i]}">${medals[i]}</div>
+    </div>
+  ` : '').join('');
+}
+
+function fireConfetti() {
+  const duration = 4000;
+  const end = Date.now() + duration;
+  const colors = ['#e91e8c', '#9c27b0', '#2196f3', '#ffd700', '#4caf50', '#ff9800'];
+
+  (function frame() {
+    confetti({ particleCount: 4, angle: 60, spread: 70, origin: { x: 0, y: 0.7 }, colors });
+    confetti({ particleCount: 4, angle: 120, spread: 70, origin: { x: 1, y: 0.7 }, colors });
+    if (Date.now() < end) requestAnimationFrame(frame);
+  })();
+
+  setTimeout(() => {
+    confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 }, colors });
+  }, 500);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ─── SSE ───
+const evtSource = new EventSource('/api/events');
+evtSource.addEventListener('scores_updated', () => loadData());
+evtSource.addEventListener('reveal', () => {
+  if (!revealed) { revealed = true; loadData(); }
+});
+evtSource.addEventListener('reset', () => { revealed = false; location.reload(); });
+
+// ─── Init ───
+loadData();
+</script>
+</body>
+</html>

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Судья — Hackathon</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #0a0a1a;
+    color: #e0e0e0;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.3rem;
+  }
+  .header .judge-name {
+    display: inline-block;
+    background: linear-gradient(135deg, #e91e8c, #9c27b0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 2rem;
+    font-weight: 800;
+  }
+  .header .sub {
+    color: #666;
+    font-size: 0.95rem;
+  }
+  .progress-bar {
+    max-width: 800px;
+    margin: 0 auto 2rem;
+    background: #1a1a2e;
+    border-radius: 10px;
+    height: 8px;
+    overflow: hidden;
+  }
+  .progress-bar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, #e91e8c, #9c27b0, #2196f3);
+    border-radius: 10px;
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+  .progress-text {
+    text-align: center;
+    color: #666;
+    font-size: 0.85rem;
+    margin-top: -1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .teams-grid {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .team-card {
+    background: linear-gradient(145deg, #1a1a2e, #16162a);
+    border: 1px solid #2a2a4a;
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+    transition: all 0.3s ease;
+  }
+  .team-card.saved {
+    border-color: #4caf50;
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.1);
+  }
+  .team-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .team-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .team-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+  .team-members {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 2px;
+  }
+  .team-total {
+    margin-left: auto;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #444;
+    min-width: 60px;
+    text-align: right;
+  }
+  .team-total.has-score {
+    background: linear-gradient(135deg, #e91e8c, #2196f3);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .criteria-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .criterion {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .criterion-label {
+    font-size: 0.8rem;
+    color: #888;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .stars {
+    display: flex;
+    gap: 4px;
+  }
+  .star {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    border: 2px solid #2a2a4a;
+    background: #12121f;
+    color: #444;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .star:hover {
+    border-color: #e91e8c;
+    color: #e91e8c;
+    transform: scale(1.1);
+  }
+  .star.active {
+    background: linear-gradient(135deg, #e91e8c, #9c27b0);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(233, 30, 140, 0.3);
+  }
+  .comment-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  .comment-input {
+    flex: 1;
+    background: #12121f;
+    border: 1px solid #2a2a4a;
+    border-radius: 10px;
+    padding: 0.7rem 1rem;
+    color: #e0e0e0;
+    font-size: 0.9rem;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 42px;
+    max-height: 100px;
+    transition: border-color 0.2s;
+  }
+  .comment-input:focus {
+    outline: none;
+    border-color: #9c27b0;
+  }
+  .comment-input::placeholder { color: #444; }
+  .save-btn {
+    padding: 0.7rem 2rem;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #e91e8c, #9c27b0);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .save-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(233, 30, 140, 0.3);
+  }
+  .save-btn:active { transform: translateY(0); }
+  .save-btn.saved {
+    background: #4caf50;
+    pointer-events: none;
+  }
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #4caf50;
+    color: #fff;
+    padding: 0.8rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    z-index: 100;
+    transition: transform 0.3s ease;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .back-link {
+    display: inline-block;
+    margin-bottom: 1rem;
+    color: #666;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+  }
+  .back-link:hover { color: #e0e0e0; }
+  @media (max-width: 600px) {
+    .criteria-grid { grid-template-columns: 1fr 1fr; }
+    .team-card { padding: 1rem; }
+    .star { width: 32px; height: 32px; font-size: 0.9rem; }
+  }
+</style>
+</head>
+<body>
+  <div style="max-width:900px;margin:0 auto;">
+    <a href="/" class="back-link">&larr; Назад</a>
+  </div>
+
+  <div class="header">
+    <h1>Панель судьи: <span class="judge-name" id="judgeName"></span></h1>
+    <div class="sub">Оцените каждую команду по шкале от 1 до 5</div>
+  </div>
+
+  <div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+  <div class="progress-text" id="progressText"></div>
+
+  <div class="teams-grid" id="teamsGrid"></div>
+
+  <div class="toast" id="toast">Оценки сохранены!</div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const judge = params.get('judge');
+if (!judge || !['aleksej', 'egor'].includes(judge)) {
+  location.href = '/';
+}
+
+const judgeNames = { aleksej: 'Алексей', egor: 'Егор' };
+document.getElementById('judgeName').textContent = judgeNames[judge];
+document.title = `${judgeNames[judge]} — Судья`;
+
+let appData = null;
+
+async function loadData() {
+  const res = await fetch('/api/data');
+  appData = await res.json();
+  render();
+}
+
+function getScore(teamId, criterion) {
+  const s = appData.scores[judge]?.[teamId];
+  return s ? (s[criterion] || 0) : 0;
+}
+
+function getComment(teamId) {
+  const s = appData.scores[judge]?.[teamId];
+  return s ? (s.comment || '') : '';
+}
+
+function getTotal(teamId) {
+  const s = appData.scores[judge]?.[teamId];
+  if (!s) return 0;
+  return (s.business || 0) + (s.innovation || 0) + (s.readiness || 0) + (s.presentation || 0);
+}
+
+function isSaved(teamId) {
+  const s = appData.scores[judge]?.[teamId];
+  return s && s.business > 0 && s.innovation > 0 && s.readiness > 0 && s.presentation > 0;
+}
+
+function updateProgress() {
+  const total = appData.teams.length;
+  const done = appData.teams.filter(t => isSaved(t.id)).length;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${done} из ${total} команд оценено`;
+}
+
+const criteria = [
+  { key: 'business', label: 'Польза для бизнеса' },
+  { key: 'innovation', label: 'Инновационность' },
+  { key: 'readiness', label: 'Готовность к применению' },
+  { key: 'presentation', label: 'Презентация и ясность' }
+];
+
+function render() {
+  const grid = document.getElementById('teamsGrid');
+  grid.innerHTML = '';
+
+  appData.teams.forEach(team => {
+    const card = document.createElement('div');
+    card.className = 'team-card' + (isSaved(team.id) ? ' saved' : '');
+    card.id = `team-${team.id}`;
+
+    const total = getTotal(team.id);
+
+    let criteriaHTML = criteria.map(c => {
+      const val = getScore(team.id, c.key);
+      const starsHTML = [1,2,3,4,5].map(n =>
+        `<button class="star ${n <= val ? 'active' : ''}" data-team="${team.id}" data-criterion="${c.key}" data-value="${n}">${n}</button>`
+      ).join('');
+      return `<div class="criterion">
+        <div class="criterion-label">${c.label}</div>
+        <div class="stars">${starsHTML}</div>
+      </div>`;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="team-header">
+        <div class="team-badge" style="background:${team.color}">${team.id}</div>
+        <div>
+          <div class="team-name">${team.name}</div>
+          <div class="team-members">${team.members.join(', ')}</div>
+        </div>
+        <div class="team-total ${total > 0 ? 'has-score' : ''}" id="total-${team.id}">${total > 0 ? total + '/20' : '—'}</div>
+      </div>
+      <div class="criteria-grid">${criteriaHTML}</div>
+      <div class="comment-row">
+        <textarea class="comment-input" placeholder="Комментарий (необязательно)" data-team="${team.id}">${getComment(team.id)}</textarea>
+        <button class="save-btn ${isSaved(team.id) ? 'saved' : ''}" data-team="${team.id}">${isSaved(team.id) ? 'Сохранено ✓' : 'Сохранить'}</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  updateProgress();
+
+  // Event listeners
+  document.querySelectorAll('.star').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const teamId = btn.dataset.team;
+      const criterion = btn.dataset.criterion;
+      const value = parseInt(btn.dataset.value);
+
+      if (!appData.scores[judge]) appData.scores[judge] = {};
+      if (!appData.scores[judge][teamId]) appData.scores[judge][teamId] = {};
+      appData.scores[judge][teamId][criterion] = value;
+
+      // Update stars visual
+      const container = btn.parentElement;
+      container.querySelectorAll('.star').forEach(s => {
+        s.classList.toggle('active', parseInt(s.dataset.value) <= value);
+      });
+
+      // Update total
+      const total = getTotal(teamId);
+      const totalEl = document.getElementById(`total-${teamId}`);
+      totalEl.textContent = total > 0 ? total + '/20' : '—';
+      totalEl.className = 'team-total' + (total > 0 ? ' has-score' : '');
+
+      // Reset save button
+      const saveBtn = document.querySelector(`.save-btn[data-team="${teamId}"]`);
+      saveBtn.className = 'save-btn';
+      saveBtn.textContent = 'Сохранить';
+    });
+  });
+
+  document.querySelectorAll('.save-btn').forEach(btn => {
+    btn.addEventListener('click', () => saveTeam(btn.dataset.team));
+  });
+}
+
+async function saveTeam(teamId) {
+  const scores = appData.scores[judge]?.[teamId] || {};
+  const comment = document.querySelector(`textarea[data-team="${teamId}"]`)?.value || '';
+
+  if (!scores.business || !scores.innovation || !scores.readiness || !scores.presentation) {
+    showToast('Выставьте все 4 оценки!', '#ff5722');
+    return;
+  }
+
+  const res = await fetch(`/api/scores/${judge}/${teamId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...scores, comment })
+  });
+
+  if (res.ok) {
+    const btn = document.querySelector(`.save-btn[data-team="${teamId}"]`);
+    btn.className = 'save-btn saved';
+    btn.textContent = 'Сохранено ✓';
+
+    const card = document.getElementById(`team-${teamId}`);
+    card.classList.add('saved');
+
+    updateProgress();
+    showToast('Оценки сохранены!', '#4caf50');
+  }
+}
+
+function showToast(text, color) {
+  const toast = document.getElementById('toast');
+  toast.textContent = text;
+  toast.style.background = color || '#4caf50';
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+loadData();
+</script>
+</body>
+</html>
